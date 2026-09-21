@@ -213,6 +213,30 @@
   .after { opacity: 0; animation: fade .6s 3s forwards; display: grid; gap: 12px; }
   @keyframes fade { to { opacity: 1; } }
 
+  dialog {
+    border: 2px solid var(--line);
+    border-radius: 24px;
+    padding: 26px 22px 22px;
+    width: min(340px, calc(100% - 32px));
+    box-sizing: border-box;
+    background: var(--paper);
+    color: var(--ink);
+    text-align: center;
+    box-shadow: 0 20px 50px #ff4f8b40;
+  }
+  dialog[open] { display: grid; gap: 10px; animation: pop .4s cubic-bezier(.3,1.6,.5,1); }
+  dialog::backdrop { background: #ffd6e499; backdrop-filter: blur(3px); }
+  @keyframes pop { from { transform: scale(.7); opacity: 0; } }
+  .m-q { font: 400 36px/1.05 var(--display); color: var(--ink); }
+  .m-sub { font-size: 14px; }
+  .hearts { display: flex; justify-content: center; gap: 4px; }
+  .hearts button {
+    background: none; padding: 4px 6px; font-size: 40px; line-height: 1;
+    color: var(--line); transition: transform .15s, color .15s;
+  }
+  .hearts button.on { color: var(--accent); }
+  .hearts button:hover { transform: scale(1.2); }
+  .m-res { font-weight: 500; color: var(--accent); min-height: 1.5em; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; transition: none !important; }
   }
@@ -309,6 +333,20 @@
   </section>
 </main>
 
+<dialog id="mood" aria-labelledby="mood-q">
+  <p class="m-q" id="mood-q">Настроение поднялось?</p>
+  <p class="m-sub">Оцени в сердечках</p>
+  <div class="hearts" id="hearts" role="radiogroup" aria-label="Сколько сердечек">
+    <button type="button" role="radio" aria-checked="false" aria-label="1 сердечко">♥</button>
+    <button type="button" role="radio" aria-checked="false" aria-label="2 сердечка">♥</button>
+    <button type="button" role="radio" aria-checked="false" aria-label="3 сердечка">♥</button>
+    <button type="button" role="radio" aria-checked="false" aria-label="4 сердечка">♥</button>
+    <button type="button" role="radio" aria-checked="false" aria-label="5 сердечек">♥</button>
+  </div>
+  <p class="m-res" id="mood-res" aria-live="polite"></p>
+  <button class="yes" id="mood-close" type="button" hidden>Закрыть</button>
+</dialog>
+
 <script>
   const $ = id => document.getElementById(id);
   const show = id => document.querySelectorAll('.step').forEach(s => s.hidden = s.id !== id);
@@ -373,6 +411,21 @@
     $('t-time').textContent = time;
     $('t-num').textContent = String(Math.floor(Math.random() * 9000) + 1000);
     show('s-ticket');
+    setTimeout(() => $('mood').open || $('mood').showModal(), 6000);
   };
   $('restart').onclick = () => show('s-where');
+
+  // Окошко «Настроение поднялось?»
+  const hearts = [...$('hearts').children];
+  const moodText = ['Значит, надо чаще видеться', 'Исправим на свидании', 'Уже неплохо — дальше больше', 'Почти максимум!', 'Ура, это лучший результат ♥'];
+  hearts.forEach((h, i) => {
+    h.onclick = () => {
+      hearts.forEach((x, j) => { x.classList.toggle('on', j <= i); x.setAttribute('aria-checked', j === i); });
+      $('mood-res').textContent = moodText[i];
+      $('mood-close').hidden = false;
+    };
+    h.onmouseenter = () => hearts.forEach((x, j) => x.style.color = j <= i ? 'var(--accent)' : '');
+  });
+  $('hearts').onmouseleave = () => hearts.forEach(x => x.style.color = '');
+  $('mood-close').onclick = () => $('mood').close();
 </script>
